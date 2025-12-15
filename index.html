@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,12 +10,17 @@
         body {
             margin: 0;
             font-family: 'Arial', sans-serif;
-            background-color: #111; /* 黒背景 */
+            background-color: #111;
+            /* 黒背景 */
             color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh; /* 画面全体の高さ */
+            min-height: 100vh;
+            /* コンテンツが多い場合は伸びるように変更 */
+            padding: 20px;
+            /* 端に寄りすぎないように余白 */
+            box-sizing: border-box;
             text-align: center;
         }
 
@@ -22,28 +28,35 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 40px; /* タイトルとボタンの間のスペース */
+            gap: 30px;
+            /* タイトルとボタンの間のスペース */
+            width: 100%;
         }
 
         /* タイトルロゴ画像 */
         #title-logo {
-            width: 80%;
+            width: 90%;
             max-width: 600px;
-            margin: 20px 0; /* 上下の余白を調整 */
+            height: auto;
+            object-fit: contain;
         }
- 
+
         /* メニューボタンのコンテナ */
         .menu-buttons {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 25px; /* ボタン間のスペース */
+            gap: 20px;
+            /* ボタン間のスペース */
+            width: 100%;
         }
 
         /* ボタン共通スタイル */
         .btn {
             display: block;
             width: 280px;
+            max-width: 90%;
+            /* スマホでは画面幅に合わせる */
             padding: 15px 0;
             font-size: 1.5rem;
             font-weight: bold;
@@ -51,7 +64,8 @@
             text-decoration: none;
             border-radius: 10px;
             transition: all 0.2s ease-in-out;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+            position: relative;
         }
 
         .btn:active {
@@ -60,7 +74,8 @@
 
         /* NORMAL MODE ボタン (青) */
         .btn-normal {
-            background-color: #3b82f6; /* 青 */
+            background-color: #3b82f6;
+            /* 青 */
             box-shadow: 0 5px #1e40af;
         }
 
@@ -71,7 +86,8 @@
 
         /* HARD MODE ボタン (赤) */
         .btn-hard {
-            background-color: #d32f2f; /* 赤 */
+            background-color: #d32f2f;
+            /* 赤 */
             box-shadow: 0 5px #9a0007;
         }
 
@@ -80,7 +96,7 @@
             box-shadow: 0 5px #b91c1c;
         }
 
-        /* HARD MODEの警告文 */
+        /* HARD MODEのラッパーと警告文 */
         .hard-mode-wrapper {
             display: flex;
             flex-direction: column;
@@ -90,19 +106,48 @@
 
         .warning {
             font-size: 0.9rem;
-            color: #f87171; /* 少し明るい赤 */
+            color: #f87171;
+            /* 少し明るい赤 */
             margin: 0;
+            font-weight: bold;
         }
 
         /* スマホ用レスポンシブ調整 */
         @media (max-width: 480px) {
             .btn {
-                width: 220px;
+                width: 240px;
                 font-size: 1.2rem;
+                padding: 12px 0;
+            }
+        }
+
+        /* スマホ横向き（ランドスケープ）対応 */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            .container {
+                flex-direction: row;
+                /* 横並びにして高さを節約 */
+                justify-content: center;
+                gap: 50px;
+            }
+
+            #title-logo {
+                width: 40%;
+                /* ロゴを小さく */
+                max-width: 300px;
+            }
+
+            .menu-buttons {
+                width: auto;
+            }
+
+            .btn {
+                width: 220px;
+                padding: 10px 0;
             }
         }
     </style>
 </head>
+
 <body>
 
     <div class="container">
@@ -110,12 +155,14 @@
 
         <div class="menu-buttons">
             <a href="normal.html" class="btn btn-normal">NORMAL MODE</a>
-            
+
             <div class="hard-mode-wrapper">
                 <a href="hard.html" class="btn btn-hard">HARD MODE</a>
+                <p class="warning">※激ムズ注意</p>
             </div>
         </div>
     </div>
 
 </body>
+
 </html>

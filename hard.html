@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAG-MEMORY</title>
+    <title>JAG-MEMORY (HARD)</title>
     <style>
         body {
             font-family: sans-serif;
@@ -12,148 +13,192 @@
             align-items: center;
             background-color: #f0f0f0;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
+            /* スマホ向けに余白を少し減らす */
         }
 
-        h1 {
+        /* === コントロールパネル（スマホ最適化） === */
+        .control-panel {
+            display: flex;
+            justify-content: space-around;
+            /* 均等配置 */
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
             margin-bottom: 10px;
-            color: red; /* HARDモード用に文字色を赤に */
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            gap: 10px;
+            /* 要素間の隙間 */
+        }
+
+        /* ボタン・リンク・手数のスタイル調整 */
+        .reset-btn {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px #9a0007, 0 2px 4px rgba(0, 0, 0, 0.2);
+            /* マージン等は親のgapに任せる */
+        }
+
+        .reset-btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        .nav-link a {
+            text-decoration: none;
+            color: #3b82f6;
+            font-weight: bold;
+            font-size: 0.9rem;
         }
 
         .score-board {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            padding: 10px 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 0;
+            padding: 0;
+            background: none;
+            box-shadow: none;
         }
 
-        /* ゲームボード：5列×4行のグリッド表示 */
+        /* ゲームボード：6列×4行 */
         .game-board {
             display: grid;
-            grid-template-columns: repeat(6, 100px); /* 6列×4行 */
-            gap: 10px;
-            perspective: 1000px; /* フリップアニメーション用 */
+            grid-template-columns: repeat(6, 1fr);
+            /* 画面幅に合わせて伸縮 */
+            gap: 5px;
+            /* 隙間を詰める */
+            width: 100%;
+            max-width: 650px;
+            /* PCでの最大幅 */
+            perspective: 1000px;
         }
 
-        /* カードの共通スタイル */
+        /* カードスタイル */
         .card {
-            width: 100px;
-            height: 100px;
+            aspect-ratio: 1 / 1;
+            /* 正方形を維持 */
+            width: 100%;
+            /* グリッド幅に合わせる */
+            height: auto;
             position: relative;
             cursor: pointer;
             transform-style: preserve-3d;
             transition: transform 0.5s;
         }
 
-        /* めくられた時のスタイル */
         .card.flipped {
             transform: rotateY(180deg);
             cursor: default;
         }
 
-        /* カードの表面と裏面 */
         .card-face {
             width: 100%;
             height: 100%;
             position: absolute;
             backface-visibility: hidden;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
             display: flex;
             justify-content: center;
             align-items: center;
+            /* 画像を大きく見せるためpaddingは極小にする */
+            padding: 2px;
         }
 
-        /* 裏面（絵柄） */
         .card-front {
             background-color: white;
-            transform: rotateY(180deg); /* 最初は裏返しておく */
+            transform: rotateY(180deg);
         }
 
         .card-front img {
-            max-width: 98%;
-            max-height: 98%;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
+            /* 枠いっぱいに表示 */
         }
 
-        /* 表面（背表紙） */
         .card-back {
-            background-color: #3b82f6; /* 青色 */
-            background-image: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 10px,
-                rgba(255, 255, 255, 0.1) 10px,
-                rgba(255, 255, 255, 0.1) 20px
-            );
-        }
-
-        /* クリア時のメッセージ */
-        #win-message {
-            display: none;
-            margin-top: 20px;
-            color: #d32f2f;
-            font-weight: bold;
-            font-size: 1.5rem;
-        }
-
-        /* リセットボタン */
-        .reset-btn {
-            background-color: #d32f2f; /* 赤色 */
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 20px;
-            box-shadow: 0 4px #9a0007, 0 6px 10px rgba(0,0,0,0.3);
-            transition: all 0.1s ease-in-out;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-
-        .reset-btn:hover {
-            background-color: #e53935; /* 少し明るい赤 */
-        }
-
-        .reset-btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px #9a0007;
-        }
-
-        .nav-link {
-            margin-top: 10px;
-            font-size: 1rem;
+            background-color: #3b82f6;
+            background-image: repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 5px,
+                    rgba(255, 255, 255, 0.1) 5px,
+                    rgba(255, 255, 255, 0.1) 10px);
         }
 
         /* マッチ情報表示エリア */
         #match-info {
-            margin-top: 15px;
-            font-size: 1.2rem;
+            margin-top: 10px;
+            font-size: 1rem;
             font-weight: bold;
-            color: #3b82f6; /* 青色 */
-            height: 1.5em; /* メッセージがない時も高さを確保 */
+            color: #3b82f6;
+            min-height: 1.5em;
+            text-align: center;
+            width: 100%;
+            word-wrap: break-word;
+            /* 長いテキストは折り返す */
+        }
+
+        #win-message {
+            display: none;
+            margin-top: 15px;
+            color: #d32f2f;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        /* === スマホ横向き対応 (Landscape) === */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            body {
+                padding: 2px;
+            }
+
+            .control-panel {
+                margin-bottom: 5px;
+                padding: 5px;
+            }
+
+            .game-board {
+                /* 画面の高さに収まるように全体を縮小 */
+                transform: scale(0.85);
+                transform-origin: top center;
+                margin-bottom: -50px;
+                /* 下の余白を詰める */
+            }
+
+            /* メッセージなどは小さく表示 */
+            #match-info {
+                font-size: 0.9rem;
+                margin-top: 5px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-    <h1>神経衰弱（HARD）</h1>
-    <button id="reset-button" class="reset-btn">もう一度遊ぶ</button>
-    
-    <div class="nav-link">
-        <a href="index.html">タイトルに戻る</a>
-    </div>
-
-    <div class="score-board">
-        手数: <span id="move-count">0</span>
+    <div class="control-panel">
+        <button id="reset-button" class="reset-btn">もう一度遊ぶ</button>
+        <span class="score-board">
+            手数: <span id="move-count">0</span>
+        </span>
+        <div class="nav-link">
+            <a href="index.html">タイトルに戻る</a>
+        </div>
     </div>
 
     <div class="game-board" id="game-board">
-        </div>
+    </div>
 
     <div id="match-info"></div>
 
@@ -161,16 +206,15 @@
 
     <script>
         // ==========================================
-        // 設定エリア：画像ファイル名をここで指定します
+        // 設定エリア
         // ==========================================
         const imageFiles = [
             'fan_che1.png', 'fan_che2.png', 'mst_che.png', 'neo_che.png', 'um_che.png',
             'fan_pe1.png', 'fan_pe2.png', 'hap_pe.png', 'mst_pe.png', 'neo_pe.png',
             'neo_bar.png', 'um_bar.png'
         ];
-        
-        // 画像のパス（フォルダ名）
-        const imagePath = 'images_hard/'; 
+
+        const imagePath = 'images_hard/';
         // ==========================================
 
         const cardDescriptions = {
@@ -194,29 +238,23 @@
         const resetButton = document.getElementById('reset-button');
         const matchInfoDisplay = document.getElementById('match-info');
 
-        let cards = []; // カード情報の配列
+        let cards = [];
         let hasFlippedCard = false;
-        let lockBoard = false; // 連打防止用フラグ
+        let lockBoard = false;
         let firstCard, secondCard;
         let moveCount = 0;
         let matchedPairs = 0;
 
-        // ゲーム初期化
         function initGame() {
-            // ゲーム開始時にカード配列をクリア
+            gameBoard.innerHTML = ''; // 盤面クリア
             cards = [];
-
-            // 画像ペアを作成（元の配列を2回結合）
             let cardImages = [...imageFiles, ...imageFiles];
-            
-            // シャッフル
             cardImages = shuffle(cardImages);
 
-            // HTML生成
             cardImages.forEach(imgName => {
                 const card = document.createElement('div');
                 card.classList.add('card');
-                card.dataset.image = imgName; // マッチング判定用にデータ属性を持たせる
+                card.dataset.image = imgName;
 
                 card.innerHTML = `
                     <div class="card-face card-front">
@@ -227,49 +265,39 @@
 
                 card.addEventListener('click', flipCard);
                 gameBoard.appendChild(card);
-                cards.push(card); // 生成したカードを配列に保持
+                cards.push(card);
             });
         }
 
-        // カードをめくる処理
         function flipCard() {
-            // ロック中（判定待ち）や、同じカードをクリックした場合は無視
             if (lockBoard) return;
             if (this === firstCard) return;
 
             this.classList.add('flipped');
 
             if (!hasFlippedCard) {
-                // 1枚目
-                // 新しい手番が始まったら前のメッセージをクリア
                 matchInfoDisplay.textContent = '';
-
                 hasFlippedCard = true;
                 firstCard = this;
                 return;
             }
 
-            // 2枚目
             secondCard = this;
             incrementMoves();
             checkForMatch();
         }
 
-        // マッチング判定
         function checkForMatch() {
             let isMatch = firstCard.dataset.image === secondCard.dataset.image;
-
             isMatch ? disableCards() : unflipCards();
         }
 
-        // マッチした場合：クリックできないようにして保持
         function disableCards() {
             firstCard.removeEventListener('click', flipCard);
-            firstCard.classList.add('matched'); // シャッフル対象外にするためのクラス
+            firstCard.classList.add('matched');
             secondCard.removeEventListener('click', flipCard);
-            secondCard.classList.add('matched'); // シャッフル対象外にするためのクラス
+            secondCard.classList.add('matched');
 
-            // 揃ったカードの情報を表示
             const imageName = firstCard.dataset.image;
             if (cardDescriptions[imageName]) {
                 matchInfoDisplay.textContent = cardDescriptions[imageName];
@@ -278,10 +306,8 @@
             matchedPairs++;
             resetBoard();
 
-            // 全ペア揃ったらクリア表示
             if (matchedPairs === imageFiles.length) {
                 setTimeout(() => {
-                    // クリア時はシャッフルしない
                     if (moveCount > 0 && moveCount % 10 === 0) {
                         matchInfoDisplay.textContent = 'シャッフル前にクリア！お見事！';
                         return;
@@ -291,46 +317,37 @@
             }
         }
 
-        // マッチしなかった場合：少し待ってから裏返す
         function unflipCards() {
-            lockBoard = true; // 操作ロック
-
+            lockBoard = true;
             setTimeout(() => {
                 firstCard.classList.remove('flipped');
                 secondCard.classList.remove('flipped');
-                
-                // カードが裏返った後にシャッフル判定とボードリセットを行う
                 checkAndShuffle();
-
-            }, 1000); // 1000ms = 1秒待機
+            }, 1000);
         }
 
-        // 手数をカウント
         function incrementMoves() {
             moveCount++;
             moveCountDisplay.textContent = moveCount;
         }
 
-        // ボードの状態をリセット（次のターンの準備）
         function resetBoard() {
             [hasFlippedCard, lockBoard] = [false, false];
             [firstCard, secondCard] = [null, null];
         }
 
-        // 10手ごとのシャッフルをチェックして実行する関数
         function checkAndShuffle() {
-            // 10の倍数の手番かどうかをチェック
             if (moveCount > 0 && moveCount % 10 === 0) {
-                // ゲームクリアしていなければシャッフル実行
                 if (matchedPairs !== imageFiles.length) {
+                    // スマホではalertは邪魔になることがあるので、メッセージ表示のみに変更しても良いかもですが
+                    // 今回は要件通りalertを使用します（必要ならここを変えてください）
                     alert('10手経過！カードをシャッフルします！');
                     shuffleUnmatchedCards();
                 }
             }
-            resetBoard(); // シャッフル後（または通常時）にボードをリセット
+            resetBoard();
         }
 
-        // 配列シャッフル関数 (Fisher-Yates)
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -339,48 +356,29 @@
             return array;
         }
 
-        // 場に残っている未マッチのカードをシャッフルする関数
         function shuffleUnmatchedCards() {
-            lockBoard = true; // シャッフル中は操作をロック
-
-            // 未マッチのカード（.matchedクラスがない）を取得
+            lockBoard = true;
             const unmatchedCards = Array.from(gameBoard.children).filter(card => !card.classList.contains('matched'));
-
-            // 未マッチのカードをシャッフル
             const shuffledUnmatched = shuffle(unmatchedCards);
-
-            // DOMの順序を入れ替える
             shuffledUnmatched.forEach(card => {
                 gameBoard.appendChild(card);
             });
-
-            lockBoard = false; // ロック解除
+            lockBoard = false;
         }
 
-        // ゲームをリセットする関数
         function resetGame() {
-            // 盤面をクリア
-            gameBoard.innerHTML = '';
-
-            // 各種変数を初期化
             moveCount = 0;
             matchedPairs = 0;
             moveCountDisplay.textContent = moveCount;
             matchInfoDisplay.textContent = '';
             winMessage.style.display = 'none';
-
-            // ボードの状態をリセット
             resetBoard();
-
-            // ゲームを再初期化
             initGame();
         }
 
-        // ゲーム開始
         initGame();
-
-        // リセットボタンのイベントリスナー
         resetButton.addEventListener('click', resetGame);
     </script>
 </body>
+
 </html>
