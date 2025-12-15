@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAG-MEMORY</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: red; /* HARDモード用に文字色を赤に */
+        }
+
+        .score-board {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* ゲームボード：5列×4行のグリッド表示 */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 100px); /* 6列×4行 */
+            gap: 10px;
+            perspective: 1000px; /* フリップアニメーション用 */
+        }
+
+        /* カードの共通スタイル */
+        .card {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+        }
+
+        /* めくられた時のスタイル */
+        .card.flipped {
+            transform: rotateY(180deg);
+            cursor: default;
+        }
+
+        /* カードの表面と裏面 */
+        .card-face {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 裏面（絵柄） */
+        .card-front {
+            background-color: white;
+            transform: rotateY(180deg); /* 最初は裏返しておく */
+        }
+
+        .card-front img {
+            max-width: 98%;
+            max-height: 98%;
+            object-fit: contain;
+        }
+
+        /* 表面（背表紙） */
+        .card-back {
+            background-color: #3b82f6; /* 青色 */
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 255, 255, 0.1) 10px,
+                rgba(255, 255, 255, 0.1) 20px
+            );
+        }
+
+        /* クリア時のメッセージ */
+        #win-message {
+            display: none;
+            margin-top: 20px;
+            color: #d32f2f;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        /* リセットボタン */
+        .reset-btn {
+            background-color: #d32f2f; /* 赤色 */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            box-shadow: 0 4px #9a0007, 0 6px 10px rgba(0,0,0,0.3);
+            transition: all 0.1s ease-in-out;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .reset-btn:hover {
+            background-color: #e53935; /* 少し明るい赤 */
+        }
+
+        .reset-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #9a0007;
+        }
+
+        .nav-link {
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+
+        /* マッチ情報表示エリア */
+        #match-info {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #3b82f6; /* 青色 */
+            height: 1.5em; /* メッセージがない時も高さを確保 */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>神経衰弱（HARD）</h1>
+    <button id="reset-button" class="reset-btn">もう一度遊ぶ</button>
+    
+    <div class="nav-link">
+        <a href="index.html">タイトルに戻る</a>
+    </div>
+
+    <div class="score-board">
+        手数: <span id="move-count">0</span>
+    </div>
+
+    <div class="game-board" id="game-board">
+        </div>
+
+    <div id="match-info"></div>
+
+    <div id="win-message">ゲームクリア！おめでとうございます！</div>
+
+    <script>
+        // ==========================================
+        // 設定エリア：画像ファイル名をここで指定します
+        // ==========================================
+        const imageFiles = [
+            'fan_che1.png', 'fan_che2.png', 'mst_che.png', 'neo_che.png', 'um_che.png',
+            'fan_pe1.png', 'fan_pe2.png', 'hap_pe.png', 'mst_pe.png', 'neo_pe.png',
+            'neo_bar.png', 'um_bar.png'
+        ];
+        
+        // 画像のパス（フォルダ名）
+        const imagePath = 'images_hard/'; 
+        // ==========================================
+
+        const cardDescriptions = {
+            'fan_che1.png': 'ファンキージャグラー2　左リール21番のチェリー',
+            'fan_che2.png': 'ファンキージャグラー2　左リール9番のチェリー',
+            'mst_che.png': 'ミスタージャグラーEX　左リール18番のチェリー',
+            'neo_che.png': 'ネオアイムジャグラー　左リール8番のチェリー',
+            'um_che.png': 'ウルトラミラクルジャグラー　左リール8番のチェリー',
+            'fan_pe1.png': 'ファンキージャグラー　右リール13番のピエロ',
+            'fan_pe2.png': 'ファンキージャグラー　左リール5番のピエロ',
+            'hap_pe.png': 'ハッピージャグラーVⅢ　左リール13番のピエロ',
+            'mst_pe.png': 'ミスタージャグラー　右リール13番のピエロ',
+            'neo_pe.png': 'ネオアイムジャグラーEX　左リール13番のピエロ',
+            'neo_bar.png': 'ネオアイムジャグラーEX　BAR',
+            'um_bar.png': 'ウルトラミラクルジャグラー　BAR'
+        };
+
+        const gameBoard = document.getElementById('game-board');
+        const moveCountDisplay = document.getElementById('move-count');
+        const winMessage = document.getElementById('win-message');
+        const resetButton = document.getElementById('reset-button');
+        const matchInfoDisplay = document.getElementById('match-info');
+
+        let cards = []; // カード情報の配列
+        let hasFlippedCard = false;
+        let lockBoard = false; // 連打防止用フラグ
+        let firstCard, secondCard;
+        let moveCount = 0;
+        let matchedPairs = 0;
+
+        // ゲーム初期化
+        function initGame() {
+            // ゲーム開始時にカード配列をクリア
+            cards = [];
+
+            // 画像ペアを作成（元の配列を2回結合）
+            let cardImages = [...imageFiles, ...imageFiles];
+            
+            // シャッフル
+            cardImages = shuffle(cardImages);
+
+            // HTML生成
+            cardImages.forEach(imgName => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.image = imgName; // マッチング判定用にデータ属性を持たせる
+
+                card.innerHTML = `
+                    <div class="card-face card-front">
+                        <img src="${imagePath}${imgName}" alt="card image">
+                    </div>
+                    <div class="card-face card-back"></div>
+                `;
+
+                card.addEventListener('click', flipCard);
+                gameBoard.appendChild(card);
+                cards.push(card); // 生成したカードを配列に保持
+            });
+        }
+
+        // カードをめくる処理
+        function flipCard() {
+            // ロック中（判定待ち）や、同じカードをクリックした場合は無視
+            if (lockBoard) return;
+            if (this === firstCard) return;
+
+            this.classList.add('flipped');
+
+            if (!hasFlippedCard) {
+                // 1枚目
+                // 新しい手番が始まったら前のメッセージをクリア
+                matchInfoDisplay.textContent = '';
+
+                hasFlippedCard = true;
+                firstCard = this;
+                return;
+            }
+
+            // 2枚目
+            secondCard = this;
+            incrementMoves();
+            checkForMatch();
+        }
+
+        // マッチング判定
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.image === secondCard.dataset.image;
+
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        // マッチした場合：クリックできないようにして保持
+        function disableCards() {
+            firstCard.removeEventListener('click', flipCard);
+            firstCard.classList.add('matched'); // シャッフル対象外にするためのクラス
+            secondCard.removeEventListener('click', flipCard);
+            secondCard.classList.add('matched'); // シャッフル対象外にするためのクラス
+
+            // 揃ったカードの情報を表示
+            const imageName = firstCard.dataset.image;
+            if (cardDescriptions[imageName]) {
+                matchInfoDisplay.textContent = cardDescriptions[imageName];
+            }
+
+            matchedPairs++;
+            resetBoard();
+
+            // 全ペア揃ったらクリア表示
+            if (matchedPairs === imageFiles.length) {
+                setTimeout(() => {
+                    // クリア時はシャッフルしない
+                    if (moveCount > 0 && moveCount % 10 === 0) {
+                        matchInfoDisplay.textContent = 'シャッフル前にクリア！お見事！';
+                        return;
+                    }
+                    winMessage.style.display = 'block';
+                }, 500);
+            }
+        }
+
+        // マッチしなかった場合：少し待ってから裏返す
+        function unflipCards() {
+            lockBoard = true; // 操作ロック
+
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                
+                // カードが裏返った後にシャッフル判定とボードリセットを行う
+                checkAndShuffle();
+
+            }, 1000); // 1000ms = 1秒待機
+        }
+
+        // 手数をカウント
+        function incrementMoves() {
+            moveCount++;
+            moveCountDisplay.textContent = moveCount;
+        }
+
+        // ボードの状態をリセット（次のターンの準備）
+        function resetBoard() {
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
+        }
+
+        // 10手ごとのシャッフルをチェックして実行する関数
+        function checkAndShuffle() {
+            // 10の倍数の手番かどうかをチェック
+            if (moveCount > 0 && moveCount % 10 === 0) {
+                // ゲームクリアしていなければシャッフル実行
+                if (matchedPairs !== imageFiles.length) {
+                    alert('10手経過！カードをシャッフルします！');
+                    shuffleUnmatchedCards();
+                }
+            }
+            resetBoard(); // シャッフル後（または通常時）にボードをリセット
+        }
+
+        // 配列シャッフル関数 (Fisher-Yates)
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // 場に残っている未マッチのカードをシャッフルする関数
+        function shuffleUnmatchedCards() {
+            lockBoard = true; // シャッフル中は操作をロック
+
+            // 未マッチのカード（.matchedクラスがない）を取得
+            const unmatchedCards = Array.from(gameBoard.children).filter(card => !card.classList.contains('matched'));
+
+            // 未マッチのカードをシャッフル
+            const shuffledUnmatched = shuffle(unmatchedCards);
+
+            // DOMの順序を入れ替える
+            shuffledUnmatched.forEach(card => {
+                gameBoard.appendChild(card);
+            });
+
+            lockBoard = false; // ロック解除
+        }
+
+        // ゲームをリセットする関数
+        function resetGame() {
+            // 盤面をクリア
+            gameBoard.innerHTML = '';
+
+            // 各種変数を初期化
+            moveCount = 0;
+            matchedPairs = 0;
+            moveCountDisplay.textContent = moveCount;
+            matchInfoDisplay.textContent = '';
+            winMessage.style.display = 'none';
+
+            // ボードの状態をリセット
+            resetBoard();
+
+            // ゲームを再初期化
+            initGame();
+        }
+
+        // ゲーム開始
+        initGame();
+
+        // リセットボタンのイベントリスナー
+        resetButton.addEventListener('click', resetGame);
+    </script>
+</body>
+</html>

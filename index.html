@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JUGGLER MEMORY</title>
+    <style>
+        /* 基本設定 */
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #111; /* 黒背景 */
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* 画面全体の高さ */
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px; /* タイトルとボタンの間のスペース */
+        }
+
+        /* タイトルロゴ画像 */
+        #title-logo {
+            width: 80%;
+            max-width: 600px;
+            margin: 20px 0; /* 上下の余白を調整 */
+        }
+ 
+        /* メニューボタンのコンテナ */
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px; /* ボタン間のスペース */
+        }
+
+        /* ボタン共通スタイル */
+        .btn {
+            display: block;
+            width: 280px;
+            padding: 15px 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.2s ease-in-out;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+        }
+
+        /* NORMAL MODE ボタン (青) */
+        .btn-normal {
+            background-color: #3b82f6; /* 青 */
+            box-shadow: 0 5px #1e40af;
+        }
+
+        .btn-normal:hover {
+            background-color: #60a5fa;
+            box-shadow: 0 5px #2563eb;
+        }
+
+        /* HARD MODE ボタン (赤) */
+        .btn-hard {
+            background-color: #d32f2f; /* 赤 */
+            box-shadow: 0 5px #9a0007;
+        }
+
+        .btn-hard:hover {
+            background-color: #ef4444;
+            box-shadow: 0 5px #b91c1c;
+        }
+
+        /* HARD MODEの警告文 */
+        .hard-mode-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .warning {
+            font-size: 0.9rem;
+            color: #f87171; /* 少し明るい赤 */
+            margin: 0;
+        }
+
+        /* スマホ用レスポンシブ調整 */
+        @media (max-width: 480px) {
+            .btn {
+                width: 220px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="logo.png" alt="JUGGLER MEMORY" id="title-logo">
+
+        <div class="menu-buttons">
+            <a href="normal.html" class="btn btn-normal">NORMAL MODE</a>
+            
+            <div class="hard-mode-wrapper">
+                <a href="hard.html" class="btn btn-hard">HARD MODE</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
